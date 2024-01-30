@@ -1,11 +1,11 @@
-﻿using BulkyWeb.Models;
+﻿using Bulky.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 
-namespace BulkyWeb.Data
+namespace Bulky.DataAccess.Data
 {
-	//any random name can be used instead of class ApplicationDbContext
-	public class ApplicationDbContext : DbContext
+    //any random name can be used instead of class ApplicationDbContext
+    public class ApplicationDbContext : DbContext
 	{
         //implementing DbContext so that we can access entity framework in our project
 

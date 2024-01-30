@@ -1,5 +1,5 @@
-﻿using BulkyWeb.Data;
-using BulkyWeb.Models;
+﻿using Bulky.DataAccess.Data;
+using Bulky.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,9 +86,19 @@ namespace BulkyWeb.Controllers
 
 		public IActionResult Delete(int? id)
 		{
-			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+            if (id == null || id == 0)
+            {
+                return NotFound();
+            }
 
-			return View(categoryFromDb);
+            Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+
+            if (categoryFromDb.CategoryId == null)
+            {
+                return NotFound();
+            }
+
+            return View(categoryFromDb);
 		}
 
 
@@ -99,7 +109,12 @@ namespace BulkyWeb.Controllers
 		{
 			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
 
-			_db.Categories.Remove(categoryFromDb);
+            if (categoryFromDb == null)
+            {
+                return NotFound();
+            }
+
+            _db.Categories.Remove(categoryFromDb);
 			_db.SaveChanges();
 
 			TempData["success"] = "Category deleted successfully";
