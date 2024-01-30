@@ -1,6 +1,7 @@
 ﻿using BulkyWeb.Data;
 using BulkyWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BulkyWeb.Controllers
 {
@@ -35,8 +36,73 @@ namespace BulkyWeb.Controllers
 		[HttpPost]
 		public IActionResult Create(Category obj)
 		{
-			_db.Categories.Add(obj);
+
+			if (ModelState.IsValid)
+			{
+				_db.Categories.Add(obj);
+				_db.SaveChanges();
+
+				TempData["success"] = "Category created successfully";
+
+				return RedirectToAction("Index", "Category");
+			}
+			
+			return View();
+		}
+
+		public IActionResult Edit(int? id)
+		{
+			if (id == null || id == 0)
+			{
+				return NotFound();
+			}
+
+			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+
+			if (categoryFromDb == null)
+			{
+				return NotFound();
+			}
+
+			return View(categoryFromDb);
+		}
+
+		//this action-method actually gets the data and posts it in database. Hence, HttpPost mentioned explicitly
+		[HttpPost]
+		public IActionResult Edit(Category obj)
+		{
+			if (ModelState.IsValid)
+			{
+				_db.Categories.Update(obj);
+				_db.SaveChanges();
+
+				TempData["success"] = "Category updated successfully";
+
+				return RedirectToAction("Index", "Category");
+			}
+
+			return View();
+		}
+
+		public IActionResult Delete(int? id)
+		{
+			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+
+			return View(categoryFromDb);
+		}
+
+
+		//here we've same method-name and method-signature hence chaning method name to DeletePost and explicitly telling the system that the ActionName here is "Delete"
+		
+		[HttpPost, ActionName("Delete")]
+		public IActionResult DeletePOST(int? id)
+		{
+			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+
+			_db.Categories.Remove(categoryFromDb);
 			_db.SaveChanges();
+
+			TempData["success"] = "Category deleted successfully";
 
 			return RedirectToAction("Index", "Category");
 		}
