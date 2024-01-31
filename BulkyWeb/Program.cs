@@ -1,4 +1,6 @@
 using Bulky.DataAccess.Data;
+using Bulky.DataAccess.Repository;
+using Bulky.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 
 	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+
+// Adding the ICategoryRepository Service as we'll need its object in CategoryController file directly through dependency injection
+
+//first paramter represents which object will be needed for depenedency injection and second parameter represents where its implementation is given as the first parameter is a interface and not a direct class.
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
 var app = builder.Build();
 

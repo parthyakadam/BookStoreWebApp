@@ -1,4 +1,5 @@
 ﻿using Bulky.DataAccess.Data;
+using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,20 +7,29 @@ using Microsoft.EntityFrameworkCore;
 namespace BulkyWeb.Controllers
 {
 	public class CategoryController : Controller
-	{
-		// we're using .Net Core hence no need to create the object on AppliationDbContext here separately as we've mentioned already that while adding services to the container that we'll need object of ApplicationDbContext, hence, the dependency injection system will automatically provide it here.
-		private readonly ApplicationDbContext _db;
+    {
+        // we're using .Net Core hence no need to create the object on AppliationDbContext here separately as we've mentioned already that while adding services to the container that we'll need object of ApplicationDbContext, hence, the dependency injection system will automatically provide it here.
 
-        public CategoryController(ApplicationDbContext db)
+        //private readonly ApplicationDbcontext _db;
+        //public CategoryController(ApplicationDbcontext db)
+        //{
+        //	_db = db;
+        //}
+
+		//as we've implemented the Repository Pattern, we'll be getting the ApplicationDbContext object in CategoryRepository and won't be dirctly accesible to any controller which will give us abstraction layer, and hence we'll be using the ICategoryRepository object here
+
+        private readonly ICategoryRepository categoryRepo;
+
+        public CategoryController(ICategoryRepository db)
         {
-			_db = db;
+			categoryRepo = db;
         }
         public IActionResult Index()
 		{
 			//no need to write separate SQL query, the object of ApplicationDbContext has methods and access to the database to fetch data. (We can perform any CRUD operations with this object on any table)
 
-			//.ToList() method retrives the data here
-			List<Category> objCategoryList = _db.Categories.ToList();
+			//.ToList() method converts the data here
+			List<Category> objCategoryList = categoryRepo.GetAll().ToList();
 
 			//passing the objCategoryList to the respective view so that data can be displayed in View
 			return View(objCategoryList);
@@ -28,7 +38,6 @@ namespace BulkyWeb.Controllers
 		//this action-method only displays the create form to the Admin, acts as a get request by user
 		public IActionResult Create()
 		{
-
 			return View();
 		}
 
@@ -39,8 +48,8 @@ namespace BulkyWeb.Controllers
 
 			if (ModelState.IsValid)
 			{
-				_db.Categories.Add(obj);
-				_db.SaveChanges();
+				categoryRepo.Add(obj);
+				categoryRepo.Save();
 
 				TempData["success"] = "Category created successfully";
 
@@ -57,7 +66,7 @@ namespace BulkyWeb.Controllers
 				return NotFound();
 			}
 
-			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+			Category? categoryFromDb = categoryRepo.Get(u => u.CategoryId == id);
 
 			if (categoryFromDb == null)
 			{
@@ -73,8 +82,8 @@ namespace BulkyWeb.Controllers
 		{
 			if (ModelState.IsValid)
 			{
-				_db.Categories.Update(obj);
-				_db.SaveChanges();
+				categoryRepo.Update(obj);
+				categoryRepo.Save();
 
 				TempData["success"] = "Category updated successfully";
 
@@ -91,7 +100,7 @@ namespace BulkyWeb.Controllers
                 return NotFound();
             }
 
-            Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+            Category? categoryFromDb = categoryRepo.Get(u => u.CategoryId==id);
 
             if (categoryFromDb.CategoryId == null)
             {
@@ -107,15 +116,15 @@ namespace BulkyWeb.Controllers
 		[HttpPost, ActionName("Delete")]
 		public IActionResult DeletePOST(int? id)
 		{
-			Category? categoryFromDb = _db.Categories.FirstOrDefault(u => u.CategoryId == id);
+			Category? categoryFromDb = categoryRepo.Get(u => u.CategoryId == id);
 
             if (categoryFromDb == null)
             {
                 return NotFound();
             }
 
-            _db.Categories.Remove(categoryFromDb);
-			_db.SaveChanges();
+            categoryRepo.Remove(categoryFromDb);
+			categoryRepo.Save();
 
 			TempData["success"] = "Category deleted successfully";
 
