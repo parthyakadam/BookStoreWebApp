@@ -22,11 +22,6 @@ namespace Bulky.DataAccess.Repository
             _db = db;
         }
 
-        public void Save()
-        {
-            _db.SaveChanges();
-        }
-
         //we've separately mentioned the update method/operation here as each entity can have different updatation style but other operations like Searching, deleting, creating will be same hence mentioned in common IRepository<T> file.
 
         public void Update(Category obj)

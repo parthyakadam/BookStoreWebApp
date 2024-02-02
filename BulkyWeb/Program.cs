@@ -18,7 +18,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 // Adding the ICategoryRepository Service as we'll need its object in CategoryController file directly through dependency injection
 
 //first paramter represents which object will be needed for depenedency injection and second parameter represents where its implementation is given as the first parameter is a interface and not a direct class.
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+//builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+//as we've implemented the UnitOfWork design pattern, we'll need the dependency injection of object of DbContext in UnitOfWork file instead of CatergoryRepository, hence we're builing the services for UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 
@@ -39,6 +42,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
 	name: "default",
-	pattern: "{controller=Home}/{action=Index}/{id?}");
+	pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
