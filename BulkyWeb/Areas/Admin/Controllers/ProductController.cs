@@ -1,7 +1,9 @@
 ﻿using Bulky.DataAccess.Data;
 using Bulky.DataAccess.Repository.IRepository;
 using Bulky.Models;
+using Bulky.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace BulkyWeb.Areas.Admin.Controllers
@@ -34,7 +36,7 @@ namespace BulkyWeb.Areas.Admin.Controllers
             //no need to write separate SQL query, the object of ApplicationDbContext has methods and access to the database to fetch data. (We can perform any CRUD operations with this object on any table)
 
             //.ToList() method converts the data here
-            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList();
+            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList();           
 
             //passing the objProductList to the respective view so that data can be displayed in View
             return View(objProductList);
@@ -43,25 +45,57 @@ namespace BulkyWeb.Areas.Admin.Controllers
         //this action-method only displays the create form to the Admin, acts as a get request by user
         public IActionResult Create()
         {
-            return View();
+            // we want to display Category Name and CategoryId in product view so that Admin can change the categoryId of a product, to achieve that we've created a SelectListItem as we'll display the Ids as dropdown list item. But the retrived data will be Category data so we'll have to convert it to SelectListItem data, to achieve that we'll use Projections in EF core through which we'll use .Select() method to tranform the data according to our need.
+            // IEnumerable<SelectListItem> CategoryList = 
+
+            // we use ViewBag to pass down multiple data terms to the view easily.
+
+            //ViewBag.CategoryList = CategoryList;
+
+            ProductVM productVM = new()
+            {
+                CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+                {
+                    Text = u.Name,
+                    Value = u.CategoryId.ToString()
+                }),
+                Product = new Product()
+            };
+
+            // direct populating required properties while creating the object itself
+            // when there are multiple ViewBag data points to be shared, it becomes hard to keep track of it, hence instead of it we use ViewModel Mechanism where we store all the necessary data at one place and is passed as object to View.
+
+            return View(productVM);
+
+            //here, after implemeting the ViewModel we've used the object of ProductVM while returning a object as it'll be used in Views also.
         }
 
         //this action-method actually gets the data and posts it in database. Hence, HttpPost mentioned explicitly
         [HttpPost]
-        public IActionResult Create(Product obj)
+        public IActionResult Create(ProductVM productVM)
         {
 
             if (ModelState.IsValid)
             {
-                _unitOfWork.Product.Add(obj);
+                _unitOfWork.Product.Add(productVM.Product);
                 _unitOfWork.Save();
 
                 TempData["success"] = "Product created successfully";
 
                 return RedirectToAction("Index", "Product");
             }
+            else
+            {
+                productVM.CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
+                    {
+                        Text = u.Name,
+                        Value = u.CategoryId.ToString()
+                    });
 
-            return View();
+                return View(productVM);
+            }
+
+            // now as the ProductVM has all the data from both the entities (including ForeignKey), it is easy to use in view and create a new data of productVM only, hence using object of ProductVM only
         }
 
         public IActionResult Edit(int? id)
