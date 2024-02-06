@@ -9,10 +9,6 @@ using System.Threading.Tasks;
 
 namespace Bulky.DataAccess.Repository
 {
-    //the ICategoryRepository interface implements IRepository<T> and also have its own methods. But the methods of IRepository<T> have been already implemented by Repository<T> class, hence, here, we're implementing both the Repository<T> class and ICategoryRepository. It'll fetch the IRepository<T> method implementations from Repository<T> automatically.
-
-    //implementing Repository<Category> here because we know that the entity used here will be the Category entity only
-
     public class ProductRepository : Repository<Product>, IProductRepository
     {
         private ApplicationDbContext _db;
@@ -22,11 +18,29 @@ namespace Bulky.DataAccess.Repository
             _db = db;
         }
 
-        //we've separately mentioned the update method/operation here as each entity can have different updatation style but other operations like Searching, deleting, creating will be same hence mentioned in common IRepository<T> file.
-
         public void Update(Product obj)
         {
-            _db.Products.Update(obj);
+            //instead of updating the whole object we can retrive the product here and update the only updated property by user
+            //_db.Products.Update(obj);
+
+            var objFromDb = _db.Products.FirstOrDefault(u => u.ProductId ==  obj.ProductId);
+
+            if (objFromDb != null)
+            {
+                objFromDb.Title = obj.Title;
+                objFromDb.ISBN = obj.ISBN;
+                objFromDb.Price = obj.Price;
+                objFromDb.Price50 = obj.Price50;
+                objFromDb.ListPrice = obj.ListPrice;
+                objFromDb.Price100 = obj.Price100;
+                objFromDb.Description = obj.Description;
+                objFromDb.CategoryId = obj.CategoryId;
+                objFromDb.Author = obj.Author;
+                if (obj.ImageUrl != null)
+                {
+                    objFromDb.ImageUrl = obj.ImageUrl;
+                }
+            }
         }
     }
 }

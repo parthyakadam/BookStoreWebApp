@@ -10,48 +10,26 @@ namespace BulkyWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class ProductController : Controller
-    {
-        // we're using .Net Core hence no need to create the object on AppliationDbContext here separately as we've mentioned already that while adding services to the container that we'll need object of ApplicationDbContext, hence, the dependency injection system will automatically provide it here.
-
-        //private readonly ApplicationDbcontext _db;
-        //public ProductController(ApplicationDbcontext db)
-        //{
-        //	_db = db;
-        //}
-
-        //as we've implemented the Repository Pattern, we'll be getting the ApplicationDbContext object in ProductRepository and won't be dirctly accesible to any controller which will give us abstraction layer, and hence we'll be using the IProductRepository object here
-
-        //private readonly IProductRepository categoryRepo;
-        //now, the UnitOfWork internally creates the object/implementation of categoryRepo, hence, we'll supply object of UnitofWork to the controller to interact with the Db.
-
+    {        
         private readonly IUnitOfWork _unitOfWork;
 
+        // used to access wwwroot folder to store image of product. It is present by default in .Net Framework hence no need to add dependency of this field
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductController(IUnitOfWork unitOfWork)
+        public ProductController(IUnitOfWork unitOfWork, IWebHostEnvironment webHostEnvironment)
         {
             _unitOfWork = unitOfWork;
+            _webHostEnvironment = webHostEnvironment;
         }
         public IActionResult Index()
-        {
-            //no need to write separate SQL query, the object of ApplicationDbContext has methods and access to the database to fetch data. (We can perform any CRUD operations with this object on any table)
+        {            
+            List<Product> objProductList = _unitOfWork.Product.GetAll(includeProperties:"Category").ToList();           
 
-            //.ToList() method converts the data here
-            List<Product> objProductList = _unitOfWork.Product.GetAll().ToList();           
-
-            //passing the objProductList to the respective view so that data can be displayed in View
             return View(objProductList);
         }
 
-        //this action-method only displays the create form to the Admin, acts as a get request by user
-        public IActionResult Create()
+        public IActionResult Upsert(int? id)
         {
-            // we want to display Category Name and CategoryId in product view so that Admin can change the categoryId of a product, to achieve that we've created a SelectListItem as we'll display the Ids as dropdown list item. But the retrived data will be Category data so we'll have to convert it to SelectListItem data, to achieve that we'll use Projections in EF core through which we'll use .Select() method to tranform the data according to our need.
-            // IEnumerable<SelectListItem> CategoryList = 
-
-            // we use ViewBag to pass down multiple data terms to the view easily.
-
-            //ViewBag.CategoryList = CategoryList;
-
             ProductVM productVM = new()
             {
                 CategoryList = _unitOfWork.Category.GetAll().Select(u => new SelectListItem
@@ -62,27 +40,73 @@ namespace BulkyWeb.Areas.Admin.Controllers
                 Product = new Product()
             };
 
-            // direct populating required properties while creating the object itself
-            // when there are multiple ViewBag data points to be shared, it becomes hard to keep track of it, hence instead of it we use ViewModel Mechanism where we store all the necessary data at one place and is passed as object to View.
+            if (id == null || id == 0)
+            {
+                //create
+                //id is not present, hence user wants to create a new product
+                return View(productVM);
+            }
+            else
+            {
+                //update
+                //id is present, hence he wants to update it
+                productVM.Product = _unitOfWork.Product.Get(u => u.ProductId == id);
+                return View(productVM);
+            }
 
-            return View(productVM);
-
-            //here, after implemeting the ViewModel we've used the object of ProductVM while returning a object as it'll be used in Views also.
+                   
         }
 
-        //this action-method actually gets the data and posts it in database. Hence, HttpPost mentioned explicitly
         [HttpPost]
-        public IActionResult Create(ProductVM productVM)
+        public IActionResult Upsert(ProductVM productVM, IFormFile? file)
         {
-
             if (ModelState.IsValid)
             {
-                _unitOfWork.Product.Add(productVM.Product);
+
+                //line 65 to 77 is the code to add the image of the new product to the respective images folder
+                string wwwRootPath = _webHostEnvironment.WebRootPath;
+
+                if(file != null)
+                {
+                    // not neccessary. Guid adds a random name to incoming file instead of user's weird file name. Using .GetExtension to get exsiting file extension of file
+                    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName) ;
+                    string productPath = Path.Combine(wwwRootPath, @"images\product");
+
+                    if (!string.IsNullOrEmpty(productVM.Product.ImageUrl))
+                    {
+                        //deleting the old image if the user has entered a new image
+                        var oldImagePath = Path.Combine(wwwRootPath , productVM.Product.ImageUrl.TrimStart('\\'));
+                            
+                        if(System.IO.File.Exists(oldImagePath))
+                        {
+                            System.IO.File.Delete(oldImagePath);
+                        }
+                    }
+
+                    using (var fileStream = new FileStream(Path.Combine(productPath, fileName), FileMode.Create))
+                    {
+                        file.CopyTo(fileStream);
+                    }
+
+                    //storing the imageUrl to database through productVM
+                    productVM.Product.ImageUrl = @"\images\product\" + fileName;
+                }
+
+                if (productVM.Product.ProductId == 0)
+                {
+                    _unitOfWork.Product.Add(productVM.Product);
+                }
+                else
+                {
+                    _unitOfWork.Product.Update(productVM.Product);
+                }
+
                 _unitOfWork.Save();
 
                 TempData["success"] = "Product created successfully";
 
                 return RedirectToAction("Index", "Product");
+
             }
             else
             {
@@ -94,80 +118,41 @@ namespace BulkyWeb.Areas.Admin.Controllers
 
                 return View(productVM);
             }
-
-            // now as the ProductVM has all the data from both the entities (including ForeignKey), it is easy to use in view and create a new data of productVM only, hence using object of ProductVM only
         }
 
-        public IActionResult Edit(int? id)
+        // using external API to add search, sort, etc. functionalities to product table
+
+        #region API CALLS
+
+        [HttpGet]
+        public IActionResult GetAll()
         {
-            if (id == null || id == 0)
-            {
-                return NotFound();
-            }
-
-            Product? productFromDb = _unitOfWork.Product.Get(u => u.ProductId == id);
-
-            if (productFromDb == null)
-            {
-                return NotFound();
-            }
-
-            return View(productFromDb);
+            List<Product> objProductList = _unitOfWork.Product.GetAll(includeProperties: "Category").ToList();
+            return Json(new { data = objProductList });
         }
 
-        //this action-method actually gets the data and posts it in database. Hence, HttpPost mentioned explicitly
-        [HttpPost]
-        public IActionResult Edit(Product obj)
-        {
-            if (ModelState.IsValid)
-            {
-                _unitOfWork.Product.Update(obj);
-                _unitOfWork.Save();
-
-                TempData["success"] = "Product updated successfully";
-
-                return RedirectToAction("Index", "Product");
-            }
-
-            return View();
-        }
-
+        [HttpDelete]
         public IActionResult Delete(int? id)
         {
-            if (id == null || id == 0)
+            var productToBeDeleted = _unitOfWork.Product.Get(u => u.ProductId == id);
+            if (productToBeDeleted == null)
             {
-                return NotFound();
+                return Json(new { success = false, message = "Error while deleting" });
             }
 
-            Product? productFromDb = _unitOfWork.Product.Get(u => u.ProductId == id);
+            var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, productToBeDeleted.ImageUrl.TrimStart('\\'));
 
-            if (productFromDb == null)
+            if (System.IO.File.Exists(oldImagePath))
             {
-                return NotFound();
+                System.IO.File.Delete(oldImagePath);
             }
 
-            return View(productFromDb);
-        }
-
-
-        //here we've same method-name and method-signature hence chaning method name to DeletePost and explicitly telling the system that the ActionName here is "Delete"
-
-        [HttpPost, ActionName("Delete")]
-        public IActionResult DeletePOST(int? id)
-        {
-            Product? obj = _unitOfWork.Product.Get(u => u.ProductId == id);
-
-            if (obj == null)
-            {
-                return NotFound();
-            }
-
-            _unitOfWork.Product.Remove(obj);
+            _unitOfWork.Product.Remove(productToBeDeleted);
             _unitOfWork.Save();
 
-            TempData["success"] = "Product deleted successfully";
-
-            return RedirectToAction("Index", "Product");
+            return Json(new { success = true, message = "Delete Successful" });
         }
+
+        #endregion
     }
 }
