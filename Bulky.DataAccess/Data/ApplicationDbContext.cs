@@ -1,12 +1,14 @@
 ﻿using Bulky.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 
 namespace Bulky.DataAccess.Data
 {
     //any random name can be used instead of class ApplicationDbContext
-    public class ApplicationDbContext : DbContext
-	{
+    public class ApplicationDbContext : IdentityDbContext<IdentityUser>
+    {
         //implementing DbContext so that we can access entity framework in our project
 
         //DbContextOptions<ApplicationDbContext> options) : base(options) --> mentioning that ApplicationDb
@@ -22,6 +24,9 @@ namespace Bulky.DataAccess.Data
         //ModelBuilder is a class that provides various methods do all this stuff and directly interact with Db
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //add this line only while using IdentityDbContext to do idntity implementation
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Category>().HasData(
                 new Category { CategoryId = 1, DisplayOrder = 1, Name = "Action" },
                 new Category { CategoryId = 2, DisplayOrder = 2, Name = "History" },

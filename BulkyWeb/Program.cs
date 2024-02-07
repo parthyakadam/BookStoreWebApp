@@ -2,6 +2,7 @@ using Bulky.DataAccess.Data;
 using Bulky.DataAccess.Repository;
 using Bulky.DataAccess.Repository.IRepository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,18 +11,13 @@ builder.Services.AddControllersWithViews();
 
 // Addding entity core to the project
 builder.Services.AddDbContext<ApplicationDbContext>(
-	//using sqlServer and retriving the connection string from appsettings.json using builder objects methods
 
 	options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Adding the ICategoryRepository Service as we'll need its object in CategoryController file directly through dependency injection
-
-//first paramter represents which object will be needed for depenedency injection and second parameter represents where its implementation is given as the first parameter is a interface and not a direct class.
-//builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-
-//as we've implemented the UnitOfWork design pattern, we'll need the dependency injection of object of DbContext in UnitOfWork file instead of CatergoryRepository, hence we're builing the services for UnitOfWork
+builder.Services.AddDefaultIdentity<IdentityUser>().AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -37,8 +33,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
+app.MapRazorPages();
 
 app.MapControllerRoute(
 	name: "default",
