@@ -9,9 +9,6 @@ namespace Bulky.DataAccess.Data
     //any random name can be used instead of class ApplicationDbContext
     public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     {
-        //implementing DbContext so that we can access entity framework in our project
-
-        //DbContextOptions<ApplicationDbContext> options) : base(options) --> mentioning that ApplicationDb
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
             
@@ -19,12 +16,10 @@ namespace Bulky.DataAccess.Data
 
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
-        //OnModelCreating method is overriden to seed data and define relationships betn tables, specifying constraints, etc.
-        //ModelBuilder is a class that provides various methods do all this stuff and directly interact with Db
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //add this line only while using IdentityDbContext to do idntity implementation
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Category>().HasData(
