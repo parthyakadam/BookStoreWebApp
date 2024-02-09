@@ -13,6 +13,8 @@ namespace Bulky.Utility
         //company role user can place bulk orders in the name of company and he'll get the book on credit for 30days
         public const string Role_Company = "Company";
         public const string Role_Admin = "Admin";
+
+        //employee role in for internal working employees who can change shipping/order details but don't have access to Category and Product CRUD operations
         public const string Role_Employee = "Employee";
     }
 }
