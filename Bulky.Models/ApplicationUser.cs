@@ -13,7 +13,7 @@ namespace Bulky.Models
         //here the ApplicationUser now has all the properties of IdentityUser and here we can now add more properties that we require
 
         [Required]
-        public int Name { get; set; }
+        public String Name { get; set; }
 
         public string? StreetAddress { get; set; }
 
