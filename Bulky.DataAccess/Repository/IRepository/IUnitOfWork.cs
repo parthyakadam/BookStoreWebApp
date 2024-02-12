@@ -9,14 +9,12 @@ namespace Bulky.DataAccess.Repository.IRepository
     public interface IUnitOfWork
     {
         ICategoryRepository Category { get; }
-
         IProductRepository Product { get; }
-
         ICompanyRepository Company { get; }
-
         IShoppingCart ShoppingCart { get; }
-
         IApplicationUserRepository ApplicationUser { get; }
+        IOrderHeaderRepository OrderHeader { get; }
+        IOrderDetailsRepository OrderDetails { get; }
 
         void Save();
     }
