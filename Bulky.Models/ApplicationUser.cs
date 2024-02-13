@@ -15,7 +15,7 @@ namespace Bulky.Models
         //here the ApplicationUser now has all the properties of IdentityUser and here we can now add more properties that we require. We'll be able to identify the user like Customer, Company form below properties
 
         [Required]
-        public String Name { get; set; }
+        public string? Name { get; set; }
 
         public string? StreetAddress { get; set; }
 
