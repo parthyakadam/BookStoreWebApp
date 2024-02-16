@@ -11,7 +11,7 @@ using System.Security.Claims;
 
 namespace BulkyWeb.Areas.Admin.Controllers
 {
-    [Area("admin")]
+    [Area("Admin")]
     [Authorize]
     public class OrderController : Controller
     {
@@ -68,7 +68,6 @@ namespace BulkyWeb.Areas.Admin.Controllers
             _unitOfWork.Save();
 
             TempData["Success"] = "Order Details Updated Successfully.";
-
 
             return RedirectToAction(nameof(Details), new { orderId = orderHeaderFromDb.OrderHeaderId });
         }
@@ -158,7 +157,7 @@ namespace BulkyWeb.Areas.Admin.Controllers
                     PriceData = new SessionLineItemPriceDataOptions
                     {
                         UnitAmount = (long)(item.Price * 100), // $20.50 => 2050
-                        Currency = "usd",
+                        Currency = "inr",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
                             Name = item.Product.Title

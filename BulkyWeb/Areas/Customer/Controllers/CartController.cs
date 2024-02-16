@@ -14,7 +14,6 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
     [Authorize]
     public class CartController : Controller
     {
-
         private readonly IUnitOfWork _unitOfWork;
 
         [BindProperty]
@@ -23,7 +22,6 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         {
             _unitOfWork = unitOfWork;
         }
-
 
         public IActionResult Index()
         {
@@ -112,6 +110,7 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
 
             _unitOfWork.OrderHeader.Add(ShoppingCartVM.OrderHeader);
             _unitOfWork.Save();
+
             foreach (var cart in ShoppingCartVM.ShoppingCartList)
             {
                 OrderDetails orderDetail = new()
@@ -156,7 +155,6 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
                     };
                     options.LineItems.Add(sessionLineItem);
                 }
-
 
                 var service = new SessionService();
                 Session session = service.Create(options);
@@ -214,6 +212,8 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
             if (cartFromDb.Count <= 1)
             {
                 //remove that from cart
+                HttpContext.Session.SetInt32(SD.SessionCart, _unitOfWork.ShoppingCart
+                   .GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count() - 1);
                 _unitOfWork.ShoppingCart.Remove(cartFromDb);
             }
             else
@@ -229,12 +229,12 @@ namespace BulkyBookWeb.Areas.Customer.Controllers
         public IActionResult Remove(int cartId)
         {
             var cartFromDb = _unitOfWork.ShoppingCart.Get(u => u.ShoppingCartId == cartId);
+            HttpContext.Session.SetInt32(SD.SessionCart, _unitOfWork.ShoppingCart
+               .GetAll(u => u.ApplicationUserId == cartFromDb.ApplicationUserId).Count() - 1);
             _unitOfWork.ShoppingCart.Remove(cartFromDb);
             _unitOfWork.Save();
             return RedirectToAction(nameof(Index));
         }
-
-
 
         private double GetPriceBasedOnQuantity(ShoppingCart shoppingCart)
         {
